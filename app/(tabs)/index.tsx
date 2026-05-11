@@ -1,98 +1,90 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { useState } from 'react'
+import React from 'react';
+import { Food } from '../../components/food';
+import FoodCard from '../../components/foodCard';
+import { apple, chicken } from '../../components/dummydata';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [diario, setDiario] = useState<Food[]>([]);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const calorieTotali = diario.reduce((totale, cibo) => totale + cibo.calories, 0);
+  const mangiaMela = () => {
+    setDiario([...diario, apple]);
+  }
+  const rimuoviMela = () => {
+    const nuovoDiario = diario.slice(0, -1);
+    setDiario(nuovoDiario);
+  }
+  return (
+    <View style={styles.container}>
+      {/* LA DASHBOARD IN ALTO */}
+      <View style={styles.dashboard}>
+        <Text style={styles.title}>Calorie di Oggi</Text>
+        <Text style={styles.calorieCount}>{calorieTotali} kcal</Text>
+      </View>
+
+      {/* IL BOTTONE PER AGGIUNGERE CIBO */}
+      <TouchableOpacity style={styles.button} onPress={mangiaMela}>
+        <Text style={styles.buttonText}>+ Mangia una Mela (52 kcal)</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={rimuoviMela}>
+        <Text style={styles.buttonText}>- Fanculo una Mela (Fanculo)</Text>
+      </TouchableOpacity>
+
+      {/* LA LISTA DEI CIBI CHE HAI MANGIATO */}
+      <Text style={styles.subtitle}>Il tuo Diario:</Text>
+      <FlatList 
+        data={diario}
+        keyExtractor={(item, index) => index.toString()} 
+        renderItem={({ item }) => <FoodCard item={item} />}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    backgroundColor: '#f4f4f4',
+  },
+  dashboard: {
+    backgroundColor: '#3498db',
+    padding: 20,
+    borderRadius: 15,
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  calorieCount: {
+    color: 'white',
+    fontSize: 36,
+    fontWeight: '900',
+    marginTop: 10,
   },
+  button: {
+    backgroundColor: '#2ecc71',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  }
 });
