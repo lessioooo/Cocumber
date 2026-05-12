@@ -26,13 +26,11 @@ export default function HomeScreen() {
   };
   return (
     <View style={styles.container}>
-      {/* LA DASHBOARD IN ALTO */}
       <View style={styles.dashboard}>
         <Text style={styles.title}>Calorie di Oggi</Text>
         <Text style={styles.calorieCount}>{calorieTotali} kcal</Text>
       </View>
 
-      {/* IL BOTTONE PER AGGIUNGERE CIBO */}
       <TouchableOpacity style={styles.button} onPress={mangiaMela}>
         <Text style={styles.buttonText}>+ Mangia una Mela (52 kcal)</Text>
       </TouchableOpacity>
@@ -40,7 +38,6 @@ export default function HomeScreen() {
         <Text style={styles.buttonText}>- Fanculo una Mela (Fanculo)</Text>
       </TouchableOpacity>
 
-      {/* LA LISTA DEI CIBI CHE HAI MANGIATO */}
       <Text style={styles.subtitle}>Il tuo Diario:</Text>
       <FlatList
         data={diario}
