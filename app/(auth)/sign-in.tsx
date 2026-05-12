@@ -4,12 +4,12 @@ import { useSignIn } from "@clerk/expo";
 import { type Href, Link, useRouter } from "expo-router";
 import React from "react";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function Page() {
@@ -155,7 +155,6 @@ export default function Page() {
       <ThemedText type="title" style={styles.title}>
         Sign in
       </ThemedText>
-
       <ThemedText style={styles.label}>Email address</ThemedText>
       <TextInput
         style={styles.input}
@@ -203,9 +202,8 @@ export default function Page() {
           {JSON.stringify(errors, null, 2)}
         </ThemedText>
       )}
-
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Don't have an account?</Text>
+        <Text style={styles.footerText}>Don&apos;t have an account?</Text>
         <Link href="/sign-up" asChild>
           <TouchableOpacity>
             <Text style={styles.signUpText}> Sign Up</Text>
