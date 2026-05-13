@@ -9,16 +9,18 @@ export default function Page() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const { isSignedIn } = useAuth();
   const router = useRouter();
-
+  const [userName, setUsername] = React.useState("");
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");
 
   const handleSubmit = async () => {
-    const { error } = await signUp.password({
+    const { error } = await signUp.create({
+      username: userName,
       emailAddress,
       password,
     });
+
     if (error) {
       console.error(JSON.stringify(error, null, 2));
       return;
@@ -115,6 +117,24 @@ export default function Page() {
         Sign up
       </ThemedText>
 
+      {/* --- CAMPO USERNAME --- */}
+      <ThemedText style={styles.label}>Username</ThemedText>
+      <TextInput
+        style={styles.input}
+        autoCapitalize="none"
+        value={userName}
+        placeholder="Enter username"
+        placeholderTextColor="#666666"
+        onChangeText={(text) => setUsername(text)}
+      />
+      {/* Mostro gli errori relativi all'username se ce ne sono (es. username già preso o troppo corto) */}
+      {errors.fields.username && (
+        <ThemedText style={styles.error}>
+          {errors.fields.username.message}
+        </ThemedText>
+      )}
+
+      {/* --- CAMPO EMAIL --- */}
       <ThemedText style={styles.label}>Email address</ThemedText>
       <TextInput
         style={styles.input}
@@ -130,6 +150,8 @@ export default function Page() {
           {errors.fields.emailAddress.message}
         </ThemedText>
       )}
+
+      {/* --- CAMPO PASSWORD --- */}
       <ThemedText style={styles.label}>Password</ThemedText>
       <TextInput
         style={styles.input}
@@ -144,18 +166,26 @@ export default function Page() {
           {errors.fields.password.message}
         </ThemedText>
       )}
+
+      {/* --- BOTTONE SIGN UP --- */}
       <Pressable
         style={({ pressed }) => [
           styles.button,
-          (!emailAddress || !password || fetchStatus === "fetching") &&
+          (!userName ||
+            !emailAddress ||
+            !password ||
+            fetchStatus === "fetching") &&
             styles.buttonDisabled,
           pressed && styles.buttonPressed,
         ]}
         onPress={handleSubmit}
-        disabled={!emailAddress || !password || fetchStatus === "fetching"}
+        disabled={
+          !userName || !emailAddress || !password || fetchStatus === "fetching"
+        }
       >
         <ThemedText style={styles.buttonText}>Sign up</ThemedText>
       </Pressable>
+
       {/* For your debugging purposes. You can just console.log errors, but we put them in the UI for convenience */}
       {errors && (
         <ThemedText style={styles.debug}>

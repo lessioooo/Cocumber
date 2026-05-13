@@ -37,18 +37,11 @@ export default function Layout() {
   const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
     unsavedChangesWarning: false,
   });
+
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <RootStack />
       <ConvexProvider client={convex}>
-        <Stack>
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false,
-            }}
-          />
-        </Stack>
+        <RootStack />
       </ConvexProvider>
     </ClerkProvider>
   );

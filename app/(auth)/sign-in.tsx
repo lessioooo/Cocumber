@@ -15,16 +15,17 @@ import {
 export default function Page() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
-
+  const [userName, setUsername] = React.useState("");
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");
 
   const handleSubmit = async () => {
     const { error } = await signIn.password({
-      emailAddress,
+      identifier: emailAddress,
       password,
     });
+
     if (error) {
       console.error(JSON.stringify(error, null, 2));
       return;
@@ -34,8 +35,6 @@ export default function Page() {
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) {
-            // Handle pending session tasks
-            // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
             console.log(session?.currentTask);
             return;
           }
@@ -49,10 +48,7 @@ export default function Page() {
         },
       });
     } else if (signIn.status === "needs_second_factor") {
-      // See https://clerk.com/docs/guides/development/custom-flows/authentication/multi-factor-authentication
     } else if (signIn.status === "needs_client_trust") {
-      // For other second factor strategies,
-      // see https://clerk.com/docs/guides/development/custom-flows/authentication/client-trust
       const emailCodeFactor = signIn.supportedSecondFactors.find(
         (factor) => factor.strategy === "email_code",
       );
@@ -61,7 +57,6 @@ export default function Page() {
         await signIn.mfa.sendEmailCode();
       }
     } else {
-      // Check why the sign-in is not complete
       console.error("Sign-in attempt not complete:", signIn);
     }
   };
@@ -73,8 +68,6 @@ export default function Page() {
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) {
-            // Handle pending session tasks
-            // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
             console.log(session?.currentTask);
             return;
           }
@@ -88,7 +81,6 @@ export default function Page() {
         },
       });
     } else {
-      // Check why the sign-in is not complete
       console.error("Sign-in attempt not complete:", signIn);
     }
   };
@@ -155,6 +147,19 @@ export default function Page() {
       <ThemedText type="title" style={styles.title}>
         Sign in
       </ThemedText>
+
+      {/* --- CAMPO USERNAME --- */}
+      <ThemedText style={styles.label}>Username</ThemedText>
+      <TextInput
+        style={styles.input}
+        autoCapitalize="none"
+        value={userName}
+        placeholder="Enter username"
+        placeholderTextColor="#666666"
+        onChangeText={(text) => setUsername(text)}
+      />
+
+      {/* --- CAMPO EMAIL --- */}
       <ThemedText style={styles.label}>Email address</ThemedText>
       <TextInput
         style={styles.input}
@@ -170,6 +175,8 @@ export default function Page() {
           {errors.fields.identifier.message}
         </ThemedText>
       )}
+
+      {/* --- CAMPO PASSWORD --- */}
       <ThemedText style={styles.label}>Password</ThemedText>
       <TextInput
         style={styles.input}
@@ -184,24 +191,32 @@ export default function Page() {
           {errors.fields.password.message}
         </ThemedText>
       )}
+
+      {/* --- BOTTONE CONTINUE --- */}
       <Pressable
         style={({ pressed }) => [
           styles.button,
-          (!emailAddress || !password || fetchStatus === "fetching") &&
+          (!userName ||
+            !emailAddress ||
+            !password ||
+            fetchStatus === "fetching") &&
             styles.buttonDisabled,
           pressed && styles.buttonPressed,
         ]}
         onPress={handleSubmit}
-        disabled={!emailAddress || !password || fetchStatus === "fetching"}
+        disabled={
+          !userName || !emailAddress || !password || fetchStatus === "fetching"
+        }
       >
         <ThemedText style={styles.buttonText}>Continue</ThemedText>
       </Pressable>
-      {/* For your debugging purposes. You can just console.log errors, but we put them in the UI for convenience */}
+
       {errors && (
         <ThemedText style={styles.debug}>
           {JSON.stringify(errors, null, 2)}
         </ThemedText>
       )}
+
       <View style={styles.footer}>
         <Text style={styles.footerText}>Don&apos;t have an account?</Text>
         <Link href="/sign-up" asChild>
@@ -218,23 +233,19 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-
   container: {
     flex: 1,
     backgroundColor: "#f4f7ff",
   },
-
   inner: {
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
   },
-
   headerContainer: {
     marginBottom: 40,
     alignItems: "center",
   },
-
   logoBox: {
     width: 64,
     height: 64,
@@ -248,25 +259,21 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     elevation: 8,
   },
-
   logoText: {
     color: "#fff",
     fontSize: 28,
     fontWeight: "700",
   },
-
   title: {
     fontSize: 32,
     fontWeight: "700",
     color: "#1e3a8a",
     marginBottom: 8,
   },
-
   subtitle: {
     fontSize: 15,
     color: "#64748b",
   },
-
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 24,
@@ -277,18 +284,16 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 8,
   },
-
   inputGroup: {
     marginBottom: 20,
   },
-
   label: {
     fontSize: 14,
     fontWeight: "600",
     color: "#334155",
     marginBottom: 6,
+    marginTop: 10,
   },
-
   input: {
     backgroundColor: "#f8fafc",
     borderRadius: 16,
@@ -298,33 +303,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-
   button: {
     backgroundColor: "#2563eb",
     paddingVertical: 16,
     borderRadius: 18,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
     shadowColor: "#2563eb",
     shadowOpacity: 0.4,
     shadowRadius: 15,
     elevation: 8,
   },
-
   buttonText: {
     color: "#ffffff",
     fontWeight: "600",
     fontSize: 16,
   },
-
   buttonDisabled: {
     opacity: 0.6,
   },
-
   buttonPressed: {
     opacity: 0.8,
   },
-
   secondaryButton: {
     backgroundColor: "#ffffff",
     borderWidth: 1,
@@ -334,36 +334,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-
   secondaryButtonText: {
     color: "#2563eb",
     fontWeight: "600",
     fontSize: 16,
   },
-
   error: {
     color: "#dc2626",
     marginTop: 6,
     marginBottom: 8,
   },
-
   debug: {
     marginTop: 10,
     color: "#64748b",
     fontSize: 12,
   },
-
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 25,
+    marginBottom: 20,
   },
-
   footerText: {
     fontSize: 14,
     color: "#64748b",
   },
-
   signUpText: {
     fontSize: 14,
     fontWeight: "600",

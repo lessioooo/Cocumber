@@ -1,5 +1,9 @@
+import { useUser } from "@clerk/expo";
+import { useQuery } from "convex/react";
+import { Redirect } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -9,8 +13,12 @@ import {
 import { apple } from "../../components/dummydata";
 import { Food } from "../../components/food";
 import FoodCard from "../../components/foodCard";
+import { api } from "../../convex/_generated/api";
 
 export default function HomeScreen() {
+  const { user } = useUser();
+  const currentMail = user?.primaryEmailAddress?.emailAddress || "";
+  const userData = useQuery(api.users.getUser, { email: currentMail });
   const [diario, setDiario] = useState<Food[]>([]);
 
   const calorieTotali = diario.reduce(
@@ -24,6 +32,23 @@ export default function HomeScreen() {
     const nuovoDiario = diario.slice(0, -1);
     setDiario(nuovoDiario);
   };
+
+  if (userData === undefined) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#3498db" />
+      </View>
+    );
+  }
+  if (userData === null) {
+    return <Redirect href="/(setup)/onboarding" />;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.dashboard}>
