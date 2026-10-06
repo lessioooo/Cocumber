@@ -1,50 +1,46 @@
-# Welcome to your Expo app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# Cocumber 🥒
+Cocumber is a mobile application made with Expo focused on calorie and weight loss tracking.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Integrated secure user authentication using Clerk.
+- Implemented a serverless Convex database to ensure real-time data persistence and seamless state management.
 
-   ```bash
-   npm install
+
+## Roadmap
+
+- Implementing Core Mechanics, such as actual daily calorie intake calculation and macro tracking.
+
+- Refining UI/UX to deliver a more engaging and intuitive user experience..
+
+
+## Authors
+
+- [@lessioooo](https://github.com/lessioooo)
+- [@abnezz](https://github.com/abnezz)
+
+## Getting Started
+
+To run this project locally, you will need to set up the environment variables for authentication and the database.
+
+### Prerequisites
+* [Node.js](https://nodejs.org/) installed
+* Expo CLI
+* Expo Go installed on your mobile device (optional)
+
+### Installation
+
+1. Clone the repository:
    ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+   git clone https://github.com/lessioooo/Cocumber.git
+2. Install dependencies:
+    ```
+    npm install
+3. Create a .env file in the root directory and add your development keys:
+    ```
+    EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+    EXPO_PUBLIC_CONVEX_URL=your_convex_deployment_url
+4. Start the application:
+    ```Bash
+    npx expo start
