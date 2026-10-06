@@ -1,7 +1,16 @@
 import { useAuth, useSignUp } from "@clerk/expo";
 import { type Href, Link, useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { ThemedText } from "../../components/themed-text";
 import { ThemedView } from "../../components/themed-view";
 
@@ -44,11 +53,11 @@ export default function Page() {
             return;
           }
 
-          const url = decorateUrl("/");
+          const url = decorateUrl("/(setup)/onboarding");
           if (url.startsWith("http")) {
             window.location.href = url;
           } else {
-            router.push(url as Href);
+            router.replace(url as Href);
           }
         },
       });
@@ -69,139 +78,184 @@ export default function Page() {
   ) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText type="title" style={styles.title}>
-          Verify your account
-        </ThemedText>
-        <TextInput
-          style={styles.input}
-          value={code}
-          placeholder="Enter your verification code"
-          placeholderTextColor="#666666"
-          onChangeText={(code) => setCode(code)}
-          keyboardType="numeric"
-        />
-        {errors.fields.code && (
-          <ThemedText style={styles.error}>
-            {errors.fields.code.message}
-          </ThemedText>
-        )}
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            fetchStatus === "fetching" && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleVerify}
-          disabled={fetchStatus === "fetching"}
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ThemedText style={styles.buttonText}>Verify</ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={() => signUp.verifications.sendEmailCode()}
-        >
-          <ThemedText style={styles.secondaryButtonText}>
-            I need a new code
-          </ThemedText>
-        </Pressable>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.form}>
+              <ThemedText style={styles.eyebrow}>COCUMBER / ACCOUNT</ThemedText>
+              <ThemedText type="title" style={styles.title}>
+                Verify your email
+              </ThemedText>
+              <ThemedText style={styles.subtitle}>
+                Enter the verification code we sent to your email address.
+              </ThemedText>
+              <ThemedText style={styles.label}>Verification code</ThemedText>
+              <TextInput
+                style={styles.input}
+                value={code}
+                placeholder="Enter your code"
+                placeholderTextColor="#718096"
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                autoComplete="one-time-code"
+                accessibilityLabel="Email verification code"
+              />
+              {errors.fields.code && (
+                <ThemedText style={styles.error}>
+                  {errors.fields.code.message}
+                </ThemedText>
+              )}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.button,
+                  fetchStatus === "fetching" && styles.buttonDisabled,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={handleVerify}
+                disabled={fetchStatus === "fetching" || !code.trim()}
+              >
+                {fetchStatus === "fetching" ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <ThemedText style={styles.buttonText}>
+                    Verify email
+                  </ThemedText>
+                )}
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.secondaryButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={() => signUp.verifications.sendEmailCode()}
+                disabled={fetchStatus === "fetching"}
+              >
+                <ThemedText style={styles.secondaryButtonText}>
+                  Resend code
+                </ThemedText>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </ThemedView>
     );
   }
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        Sign up
-      </ThemedText>
-
-      {/* --- CAMPO USERNAME --- */}
-      <ThemedText style={styles.label}>Username</ThemedText>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={userName}
-        placeholder="Enter username"
-        placeholderTextColor="#666666"
-        onChangeText={(text) => setUsername(text)}
-      />
-      {/* Mostro gli errori relativi all'username se ce ne sono (es. username già preso o troppo corto) */}
-      {errors.fields.username && (
-        <ThemedText style={styles.error}>
-          {errors.fields.username.message}
-        </ThemedText>
-      )}
-
-      {/* --- CAMPO EMAIL --- */}
-      <ThemedText style={styles.label}>Email address</ThemedText>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        placeholderTextColor="#666666"
-        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
-        keyboardType="email-address"
-      />
-      {errors.fields.emailAddress && (
-        <ThemedText style={styles.error}>
-          {errors.fields.emailAddress.message}
-        </ThemedText>
-      )}
-
-      {/* --- CAMPO PASSWORD --- */}
-      <ThemedText style={styles.label}>Password</ThemedText>
-      <TextInput
-        style={styles.input}
-        value={password}
-        placeholder="Enter password"
-        placeholderTextColor="#666666"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
-      />
-      {errors.fields.password && (
-        <ThemedText style={styles.error}>
-          {errors.fields.password.message}
-        </ThemedText>
-      )}
-
-      {/* --- BOTTONE SIGN UP --- */}
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          (!userName ||
-            !emailAddress ||
-            !password ||
-            fetchStatus === "fetching") &&
-            styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={handleSubmit}
-        disabled={
-          !userName || !emailAddress || !password || fetchStatus === "fetching"
-        }
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ThemedText style={styles.buttonText}>Sign up</ThemedText>
-      </Pressable>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.form}>
+            <ThemedText style={styles.eyebrow}>COCUMBER / ACCOUNT</ThemedText>
+            <ThemedText type="title" style={styles.title}>
+              Create your account
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Start with a few details. You can build your profile next.
+            </ThemedText>
 
-      {/* For your debugging purposes. You can just console.log errors, but we put them in the UI for convenience */}
-      {errors && (
-        <ThemedText style={styles.debug}>
-          {JSON.stringify(errors, null, 2)}
-        </ThemedText>
-      )}
+            <ThemedText style={styles.label}>Username</ThemedText>
+            <TextInput
+              style={styles.input}
+              autoCapitalize="none"
+              autoComplete="username-new"
+              value={userName}
+              placeholder="Choose a username"
+              placeholderTextColor="#718096"
+              onChangeText={setUsername}
+              accessibilityLabel="Username"
+            />
+            {errors.fields.username && (
+              <ThemedText style={styles.error}>
+                {errors.fields.username.message}
+              </ThemedText>
+            )}
 
-      <View style={styles.linkContainer}>
-        <ThemedText>Already have an account? </ThemedText>
-        <Link href="/sign-in">
-          <ThemedText type="link">Sign in</ThemedText>
-        </Link>
-      </View>
+            <ThemedText style={styles.label}>Email address</ThemedText>
+            <TextInput
+              style={styles.input}
+              autoCapitalize="none"
+              autoComplete="email"
+              value={emailAddress}
+              placeholder="you@example.com"
+              placeholderTextColor="#718096"
+              onChangeText={setEmailAddress}
+              keyboardType="email-address"
+              accessibilityLabel="Email address"
+            />
+            {errors.fields.emailAddress && (
+              <ThemedText style={styles.error}>
+                {errors.fields.emailAddress.message}
+              </ThemedText>
+            )}
 
-      {/* Required for sign-up flows. Clerk's bot sign-up protection is enabled by default */}
-      <View nativeID="clerk-captcha" />
+            <ThemedText style={styles.label}>Password</ThemedText>
+            <TextInput
+              style={styles.input}
+              value={password}
+              placeholder="Create a password"
+              placeholderTextColor="#718096"
+              secureTextEntry
+              autoCapitalize="none"
+              autoComplete="new-password"
+              onChangeText={setPassword}
+              accessibilityLabel="Password"
+            />
+            {errors.fields.password && (
+              <ThemedText style={styles.error}>
+                {errors.fields.password.message}
+              </ThemedText>
+            )}
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                fetchStatus === "fetching" && styles.buttonDisabled,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleSubmit}
+              disabled={
+                !userName.trim() ||
+                !emailAddress.trim() ||
+                !password ||
+                fetchStatus === "fetching"
+              }
+            >
+              {fetchStatus === "fetching" ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <ThemedText style={styles.buttonText}>
+                  Create account
+                </ThemedText>
+              )}
+            </Pressable>
+
+            <View style={styles.linkContainer}>
+              <ThemedText style={styles.footerText}>
+                Already have an account?
+              </ThemedText>
+              <Link href="/sign-in" asChild>
+                <Pressable accessibilityRole="link">
+                  <ThemedText style={styles.linkText}>Sign in</ThemedText>
+                </Pressable>
+              </Link>
+            </View>
+
+            <View nativeID="clerk-captcha" />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -209,67 +263,114 @@ export default function Page() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    gap: 12,
+    backgroundColor: "#f4f7ff",
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+  },
+  form: {
+    width: "100%",
+    maxWidth: 440,
+    alignSelf: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#e2e8f0",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 24,
+  },
+  eyebrow: {
+    color: "#2563eb",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 10,
   },
   title: {
+    color: "#1e3a8a",
+    fontSize: 28,
+    fontWeight: "700",
     marginBottom: 8,
   },
+  subtitle: {
+    color: "#64748b",
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 22,
+  },
   label: {
+    color: "#334155",
     fontWeight: "600",
     fontSize: 14,
+    marginBottom: 7,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#cbd5e1",
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#f8fafc",
+    color: "#1e293b",
+    marginBottom: 16,
   },
   button: {
-    backgroundColor: "#0a7ea4",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    minHeight: 50,
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
-    marginTop: 8,
+    justifyContent: "center",
+    marginTop: 6,
   },
   buttonPressed: {
-    opacity: 0.7,
+    opacity: 0.82,
   },
   buttonDisabled: {
-    opacity: 0.5,
+    opacity: 0.55,
   },
   buttonText: {
     color: "#fff",
     fontWeight: "600",
+    fontSize: 16,
   },
   secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    minHeight: 44,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 8,
   },
   secondaryButtonText: {
-    color: "#0a7ea4",
+    color: "#2563eb",
     fontWeight: "600",
   },
   linkContainer: {
     flexDirection: "row",
-    gap: 4,
-    marginTop: 12,
+    flexWrap: "wrap",
+    columnGap: 6,
+    rowGap: 4,
+    marginTop: 22,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  footerText: {
+    color: "#64748b",
+    fontSize: 14,
+  },
+  linkText: {
+    color: "#2563eb",
+    fontSize: 14,
+    fontWeight: "700",
   },
   error: {
-    color: "#d32f2f",
+    color: "#b42318",
     fontSize: 12,
-    marginTop: -8,
-  },
-  debug: {
-    fontSize: 10,
-    opacity: 0.5,
-    marginTop: 8,
+    marginTop: -10,
+    marginBottom: 10,
   },
 });

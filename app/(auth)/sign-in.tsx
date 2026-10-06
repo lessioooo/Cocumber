@@ -1,367 +1,339 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { useSignIn } from "@clerk/expo";
-import { type Href, Link, useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React from "react";
 import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function Page() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
-  const [userName, setUsername] = React.useState("");
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");
 
   const handleSubmit = async () => {
-    const { error } = await signIn.password({
-      identifier: emailAddress,
-      password,
-    });
-
-    if (error) {
-      console.error(JSON.stringify(error, null, 2));
-      return;
-    }
-
-    if (signIn.status === "complete") {
-      await signIn.finalize({
-        navigate: ({ session, decorateUrl }) => {
-          if (session?.currentTask) {
-            console.log(session?.currentTask);
-            return;
-          }
-
-          const url = decorateUrl("/");
-          if (url.startsWith("http")) {
-            window.location.href = url;
-          } else {
-            router.push(url as Href);
-          }
-        },
+    if (!signIn) return;
+    try {
+      const { error } = await signIn.password({
+        identifier: emailAddress,
+        password,
       });
-    } else if (signIn.status === "needs_second_factor") {
-    } else if (signIn.status === "needs_client_trust") {
-      const emailCodeFactor = signIn.supportedSecondFactors.find(
-        (factor) => factor.strategy === "email_code",
-      );
 
-      if (emailCodeFactor) {
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+        return;
+      }
+
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) return;
+            const url = decorateUrl("/(tabs)");
+            if (url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.replace(url as any);
+            }
+          },
+        });
+      } else if (
+        signIn.status === "needs_second_factor" ||
+        signIn.status === "needs_client_trust"
+      ) {
         await signIn.mfa.sendEmailCode();
       }
-    } else {
-      console.error("Sign-in attempt not complete:", signIn);
+    } catch (err) {
+      console.error("Errore durante il login:", err);
     }
   };
 
   const handleVerify = async () => {
-    await signIn.mfa.verifyEmailCode({ code });
+    if (!signIn) return;
+    try {
+      await signIn.mfa.verifyEmailCode({ code });
 
-    if (signIn.status === "complete") {
-      await signIn.finalize({
-        navigate: ({ session, decorateUrl }) => {
-          if (session?.currentTask) {
-            console.log(session?.currentTask);
-            return;
-          }
-
-          const url = decorateUrl("/");
-          if (url.startsWith("http")) {
-            window.location.href = url;
-          } else {
-            router.push(url as Href);
-          }
-        },
-      });
-    } else {
-      console.error("Sign-in attempt not complete:", signIn);
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) return;
+            const url = decorateUrl("/(tabs)");
+            if (url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.replace(url as any);
+            }
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Codice errato o scaduto:", err);
     }
   };
 
-  if (signIn.status === "needs_client_trust") {
+  if (
+    signIn?.status === "needs_second_factor" ||
+    signIn?.status === "needs_client_trust"
+  ) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText
-          type="title"
-          style={[styles.title, { fontSize: 24, fontWeight: "bold" }]}
-        >
-          Verify your account
-        </ThemedText>
-        <TextInput
-          style={styles.input}
-          value={code}
-          placeholder="Enter your verification code"
-          placeholderTextColor="#666666"
-          onChangeText={(code) => setCode(code)}
-          keyboardType="numeric"
-        />
-        {errors.fields.code && (
-          <ThemedText style={styles.error}>
-            {errors.fields.code.message}
-          </ThemedText>
-        )}
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            fetchStatus === "fetching" && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleVerify}
-          disabled={fetchStatus === "fetching"}
-        >
-          <ThemedText style={styles.buttonText}>Verify</ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={() => signIn.mfa.sendEmailCode()}
-        >
-          <ThemedText style={styles.secondaryButtonText}>
-            I need a new code
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={() => signIn.reset()}
-        >
-          <ThemedText style={styles.secondaryButtonText}>Start over</ThemedText>
-        </Pressable>
-      </ThemedView>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.inner}>
+          <View style={styles.headerContainer}>
+            <View style={styles.logoBox}>
+              <Text style={styles.logoText as any}>🔒</Text>
+            </View>
+            <Text style={styles.title as any}>Verifica Account</Text>
+            <Text style={styles.subtitle as any}>
+              Inserisci il codice inviato via email
+            </Text>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label as any}>Codice di sicurezza</Text>
+              <TextInput
+                style={styles.input as any}
+                value={code}
+                placeholder="Es. 123456"
+                placeholderTextColor="#94a3b8"
+                onChangeText={setCode}
+                keyboardType="numeric"
+                maxLength={6}
+              />
+              {errors?.fields?.code && (
+                <Text style={styles.error as any}>
+                  {errors.fields.code.message}
+                </Text>
+              )}
+            </View>
+
+            <Pressable
+              style={({ pressed }) =>
+                [
+                  styles.button,
+                  (!code || fetchStatus === "fetching") &&
+                    styles.buttonDisabled,
+                  pressed && styles.buttonPressed,
+                ] as any
+              }
+              onPress={handleVerify}
+              disabled={!code || fetchStatus === "fetching"}
+            >
+              <Text style={styles.buttonText as any}>Verifica</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) =>
+                [styles.secondaryButton, pressed && styles.buttonPressed] as any
+              }
+              onPress={() => signIn.mfa.sendEmailCode()}
+            >
+              <Text style={styles.secondaryButtonText as any}>
+                Invia un nuovo codice
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) =>
+                [
+                  styles.secondaryButton,
+                  pressed && styles.buttonPressed,
+                  { marginTop: 10, borderColor: "transparent" },
+                ] as any
+              }
+              onPress={() => signIn.reset()}
+            >
+              <Text
+                style={
+                  [styles.secondaryButtonText, { color: "#64748b" }] as any
+                }
+              >
+                Torna all&apos;accesso
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        Sign in
-      </ThemedText>
-
-      {/* --- CAMPO USERNAME --- */}
-      <ThemedText style={styles.label}>Username</ThemedText>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={userName}
-        placeholder="Enter username"
-        placeholderTextColor="#666666"
-        onChangeText={(text) => setUsername(text)}
-      />
-
-      {/* --- CAMPO EMAIL --- */}
-      <ThemedText style={styles.label}>Email address</ThemedText>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        placeholderTextColor="#666666"
-        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
-        keyboardType="email-address"
-      />
-      {errors.fields.identifier && (
-        <ThemedText style={styles.error}>
-          {errors.fields.identifier.message}
-        </ThemedText>
-      )}
-
-      {/* --- CAMPO PASSWORD --- */}
-      <ThemedText style={styles.label}>Password</ThemedText>
-      <TextInput
-        style={styles.input}
-        value={password}
-        placeholder="Enter password"
-        placeholderTextColor="#666666"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
-      />
-      {errors.fields.password && (
-        <ThemedText style={styles.error}>
-          {errors.fields.password.message}
-        </ThemedText>
-      )}
-
-      {/* --- BOTTONE CONTINUE --- */}
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          (!userName ||
-            !emailAddress ||
-            !password ||
-            fetchStatus === "fetching") &&
-            styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={handleSubmit}
-        disabled={
-          !userName || !emailAddress || !password || fetchStatus === "fetching"
-        }
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ThemedText style={styles.buttonText}>Continue</ThemedText>
-      </Pressable>
+        <ScrollView
+          contentContainerStyle={styles.inner}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.headerContainer}>
+            <View style={styles.logoBox}>
+              <Text style={styles.logoText as any}>🥒</Text>
+            </View>
+            <Text style={styles.title as any}>Bentornato</Text>
+            <Text style={styles.subtitle as any}>Accedi per continuare.</Text>
+          </View>
 
-      {errors && (
-        <ThemedText style={styles.debug}>
-          {JSON.stringify(errors, null, 2)}
-        </ThemedText>
-      )}
+          <View style={styles.card}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label as any}>Email</Text>
+              <TextInput
+                style={styles.input as any}
+                autoCapitalize="none"
+                value={emailAddress}
+                placeholder="tu@email.com"
+                placeholderTextColor="#94a3b8"
+                onChangeText={setEmailAddress}
+                keyboardType="email-address"
+              />
+              {errors?.fields?.identifier && (
+                <Text style={styles.error as any}>
+                  {errors.fields.identifier.message}
+                </Text>
+              )}
+            </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Don&apos;t have an account?</Text>
-        <Link href="/sign-up" asChild>
-          <TouchableOpacity>
-            <Text style={styles.signUpText}> Sign Up</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
-    </ThemedView>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label as any}>Password</Text>
+              <TextInput
+                style={styles.input as any}
+                value={password}
+                placeholder="Inserisci password"
+                placeholderTextColor="#94a3b8"
+                secureTextEntry={true}
+                onChangeText={setPassword}
+              />
+              {errors?.fields?.password && (
+                <Text style={styles.error as any}>
+                  {errors.fields.password.message}
+                </Text>
+              )}
+            </View>
+
+            <Pressable
+              style={({ pressed }) =>
+                [
+                  styles.button,
+                  (!emailAddress || !password || fetchStatus === "fetching") &&
+                    styles.buttonDisabled,
+                  pressed && styles.buttonPressed,
+                ] as any
+              }
+              onPress={handleSubmit}
+              disabled={
+                !emailAddress || !password || fetchStatus === "fetching"
+              }
+            >
+              <Text style={styles.buttonText as any}>Accedi</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText as any}>
+              Non hai ancora un account?
+            </Text>
+            <Link href="/sign-up" asChild>
+              <TouchableOpacity style={{ paddingHorizontal: 5 }}>
+                <Text style={styles.signUpText as any}>Registrati</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#f4f7ff",
-  },
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: "#f4f7ff" },
   inner: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
+    paddingVertical: 40,
   },
-  headerContainer: {
-    marginBottom: 40,
-    alignItems: "center",
-  },
+  headerContainer: { marginBottom: 35, alignItems: "center" },
   logoBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: "#2563eb",
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    backgroundColor: "#10b981",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
-    shadowColor: "#2563eb",
+    shadowColor: "#10b981",
     shadowOpacity: 0.3,
     shadowRadius: 15,
     elevation: 8,
   },
-  logoText: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#1e3a8a",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#64748b",
-  },
+  logoText: { color: "#fff", fontSize: 32, fontWeight: "700" },
+  title: { fontSize: 30, fontWeight: "800", color: "#293d32", marginBottom: 8 },
+  subtitle: { fontSize: 16, color: "#64748b" },
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 24,
     padding: 24,
-    marginBottom: 30,
-    shadowColor: "#2563eb",
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
-    elevation: 8,
+    shadowColor: "#293d32",
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
   },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#334155",
-    marginBottom: 6,
-    marginTop: 10,
-  },
+  inputGroup: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: "700", color: "#293d32", marginBottom: 8 },
   input: {
     backgroundColor: "#f8fafc",
     borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     fontSize: 15,
     borderWidth: 1,
     borderColor: "#e2e8f0",
+    color: "#0f172a",
   },
   button: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#293d32",
     paddingVertical: 16,
     borderRadius: 18,
     alignItems: "center",
-    marginTop: 20,
-    shadowColor: "#2563eb",
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
-    elevation: 8,
+    marginTop: 10,
+    shadowColor: "#293d32",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
+  buttonText: { color: "#ffffff", fontWeight: "700", fontSize: 16 },
+  buttonDisabled: { opacity: 0.5 },
+  buttonPressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
   secondaryButton: {
     backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#2563eb",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
     paddingVertical: 16,
     borderRadius: 18,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 15,
   },
-  secondaryButtonText: {
-    color: "#2563eb",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  error: {
-    color: "#dc2626",
-    marginTop: 6,
-    marginBottom: 8,
-  },
-  debug: {
-    marginTop: 10,
-    color: "#64748b",
-    fontSize: 12,
-  },
+  secondaryButtonText: { color: "#334155", fontWeight: "700", fontSize: 16 },
+  error: { color: "#ef4444", marginTop: 8, fontSize: 13, fontWeight: "500" },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 25,
+    alignItems: "center",
+    marginTop: 35,
     marginBottom: 20,
   },
-  footerText: {
-    fontSize: 14,
-    color: "#64748b",
-  },
-  signUpText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2563eb",
-  },
+  footerText: { fontSize: 15, color: "#64748b" },
+  signUpText: { fontSize: 15, fontWeight: "700", color: "#293d32" },
 });

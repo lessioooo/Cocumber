@@ -1,0 +1,6 @@
+.agents
+.claude
+node_modules
+.expo
+dist
+web-build
